@@ -6,7 +6,8 @@ from discord.abc import User
 from discord.enums import Status
 from discord.ext import commands
 
-token = "ODYxODMyMTY3NDk0NTE2NzM3.YOPhwA.1b1RDdH9v6lcyeC47CeUcrgtptA"
+token = open("C:/Users/byukim/Documents/python/discord_bot/Just one/token.txt",
+             'r').read()
 game = discord.Game("현재 대기")
 bot = commands.Bot(command_prefix='!',
                    status=discord.Status.online, activity=game)
