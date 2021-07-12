@@ -21,16 +21,49 @@ guesser = None
 main_channel = None
 guess = None
 start = False
+hint_time = False
+starter = None
+word = None
+
+async def judge_answer(guess, word):
+	global main_channel
+	global round
+	if guess == word:
+		embed = discord.Embed(title="정답자가 정답을 맞추었습니다!", description=f"정답은 {word}였습니다.")
+	elif guess == "패스":
+		embed = discord.Embed(title="정답자가 패스를 선언하였습니다.", description=f"정답은 {word}였습니다.")
+	else:
+		embed = discord.Embed(title="아쉽게도 정답을 맞히지 못했습니다.", description=f"정답은 {word}였으며, 추측한 답은 {guess}였습니다.")
+		round -= 1
+	await main_channel.send(embed)
+
+def judge_hints(hints):
+	global starter
+	for word in hints:
+		if len(hints[word]) != 1:
+			del hints[word]
+	return hints
+		
+async def start_guessing(hints):
+	global guesser
+	embed = discord.Embed(title="이제 당신의 차례입니다!")
+	embed.add_field(name="힌트들을 보고 제시어를 DM으로 보내주세요!", value=f"힌트는 {hints}입니다.")
+	embed.add_field(name="만약 패스를 하고 싶다면,", value="채팅창에 '패스'라고 입력해주세요!")
+	await guesser.send(embed=embed)
 
 async def start_round(num):
+	hint_time = True
 	global hints
+	global guesser
+	global word
 	hints = {}
 	word = random.choice(words)
 	while word in already:
 		word = random.choice(words)
 	if num >= round:
+		embed = discord.Embed(title="모든 게임이 종료되었습니다!")
+		await main_channel.send()
 		return
-	guesser = random.choice(members)
 	for member in members:
 		if member == guesser:
 			embed = discord.Embed(title="당신은 이번 라운드의 정답자입니다.",
@@ -39,14 +72,10 @@ async def start_round(num):
 			embed = discord.Embed(title="당신은 이번 라운드의 힌트 제공자입니다.",
 			                      description=f"정답자가 제시어를 맞출 수 있도록 힌트 단어를 주세요. 제시어는 {word} 입니다.")
 		await member.dm_channel.send(embed=embed)
-	while len(hints) < len(members) - 1:
-		pass
-	embed = discord.Embed(title="모든 힌트가 제시되었습니다.", desciption="정답자는 너도나도 DM으로 정답을 입력해주세요!")
-	await main_channel.send(embed=embed)
-	start_round(num + 1)
 	
 async def start_game():
 	global start
+	global guesser
 	start = True
 	embed = discord.Embed(title="Just One 게임이 시작되었습니다!",
                        description="사용 방법을 설명드릴게요~")
@@ -60,6 +89,7 @@ async def start_game():
 		elif member.dm_channel is None:
 			channel = await member.create_dm()
 		await channel.send(embed=embed)
+	guesser = random.choice(members)
 	await start_round(0)
 
 
@@ -68,11 +98,12 @@ async def 시작(ctx):
     global main_channel
     global can_join
     global start
+    global starter
 
     main_channel = ctx
     game.name = "게임 진행"
-    player = ctx.message.author
-    members.append(player)
+    starter = ctx.message.author
+    members.append(starter)
     start = True
     can_join = True
     embed = discord.Embed(title="Just One에 오신 것을 환영합니다!",
@@ -128,15 +159,25 @@ async def on_message(message):
 	global guesser
 	global guess
 	global start
-
+	global hints
+	global hint_time
+	global word
 	await bot.process_commands(message)
 	if message.author.bot:
 		return
 	if start == True:
 		if message.channel.type.name == "private":
 			if guesser == message.author:
-				guess = message.content
+				if not hint_time:
+					guess = message.content
+					await judge_answer(guess, word)
 			else:
-				hints[message.author] = message.content
-				print(hints)
+				if message.content in hints:
+					hints[message.content].append(message.author)
+				else:
+					hints[message.content] = [message.author]
+				if len(hints) >= len(members) - 1:
+					hint_time = False
+					hints = judge_hints(hints)
+					start_guessing(hints)			
 bot.run(token)
