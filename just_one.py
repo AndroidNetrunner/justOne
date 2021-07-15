@@ -24,18 +24,27 @@ start = False
 hint_time = False
 starter = None
 word = None
+confirmed = None
+
+async def confirm_hints(msg, hints):
+	global word
+	global confirmed
+	if msg == word:
+		confirmed = True
+	elif msg in hints:
+		del hints[msg]
 
 async def judge_answer(guess, word):
 	global main_channel
 	global round
 	if guess == word:
-		embed = discord.Embed(title="정답자가 정답을 맞추었습니다!", description=f"정답은 {word}였습니다.")
+		embed = discord.Embed(title="정답자가 정답을 맞추었습니다!", description=f"정답은 {word}입니다.")
 	elif guess == "패스":
-		embed = discord.Embed(title="정답자가 패스를 선언하였습니다.", description=f"정답은 {word}였습니다.")
+		embed = discord.Embed(title="정답자가 패스를 선언하였습니다.", description=f"정답은 {word}입니다.")
 	else:
-		embed = discord.Embed(title="아쉽게도 정답을 맞히지 못했습니다.", description=f"정답은 {word}였으며, 추측한 답은 {guess}였습니다.")
+		embed = discord.Embed(title="아쉽게도 정답을 맞히지 못했습니다.", description=f"정답은 {word}이며, 추측한 답은 {guess}였습니다.")
 		round -= 1
-	await main_channel.send(embed)
+	await main_channel.send(embed=embed)
 
 def judge_hints(hints):
 	global starter
@@ -47,15 +56,21 @@ def judge_hints(hints):
 async def start_guessing(hints):
 	global guesser
 	embed = discord.Embed(title="이제 당신의 차례입니다!")
-	embed.add_field(name="힌트들을 보고 제시어를 DM으로 보내주세요!", value=f"힌트는 {hints}입니다.")
+	str_hints = ""
+	for hint in hints:
+		str_hints += f"{hint}({hints[hint][0]}), "
+	str_hints = str_hints[:-2]
+	embed.add_field(name="힌트들을 보고 제시어를 DM으로 보내주세요!", value=f"힌트는 {str_hints}입니다.")
 	embed.add_field(name="만약 패스를 하고 싶다면,", value="채팅창에 '패스'라고 입력해주세요!")
 	await guesser.send(embed=embed)
 
 async def start_round(num):
-	hint_time = True
+	global hint_time
 	global hints
 	global guesser
 	global word
+
+	hint_time = True
 	hints = {}
 	word = random.choice(words)
 	while word in already:
@@ -162,22 +177,38 @@ async def on_message(message):
 	global hints
 	global hint_time
 	global word
+	global confirmed
+	global members
+
 	await bot.process_commands(message)
 	if message.author.bot:
 		return
-	if start == True:
+	if start == True and can_join == False:
 		if message.channel.type.name == "private":
 			if guesser == message.author:
 				if not hint_time:
 					guess = message.content
 					await judge_answer(guess, word)
 			else:
-				if message.content in hints:
-					hints[message.content].append(message.author)
-				else:
-					hints[message.content] = [message.author]
+				if hint_time:
+					if message.content in hints:
+						hints[message.content].append(message.author)
+					else:
+						hints[message.content] = [message.author.name]
 				if len(hints) >= len(members) - 1:
 					hint_time = False
 					hints = judge_hints(hints)
-					start_guessing(hints)			
+					await main_channel.send("모든 참가자가 힌트를 제시하였습니다. 방장이 힌트를 검수 중입니다.")
+					str_hints = ""
+					for hint in hints:
+						str_hints += f"{hint}({hints[hint][0]}), "
+					str_hints = str_hints[:-2]
+					embed = discord.Embed(title="이제 힌트를 검수할 차례입니다!", description="의미상 중복된 힌트가 있다면 힌트 단어를 입력해주세요! 삭제된 힌트는 되돌릴 수 없으니 주의하시고요!")
+					embed.add_field(name="참가자들이 입력한 힌트는 다음과 같습니다.", value=str_hints)
+					confirmer = members[1] if starter == guesser else starter 
+					await confirmer.send(embed=embed)
+			if message.author == confirmer and not hint_time:
+				confirm_hints(message.content, hints)
+			if confirmed:
+				await start_guessing(hints)			
 bot.run(token)
