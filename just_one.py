@@ -25,6 +25,8 @@ hint_time = False
 starter = None
 word = None
 confirmed = None
+checking = False
+judged_hints = {}
 
 async def confirm_hints(msg, hints):
 	global word
@@ -34,16 +36,18 @@ async def confirm_hints(msg, hints):
 	elif msg in hints:
 		del hints[msg]
 
-async def judge_answer(guess, word):
+async def judge_answer(status, guess, word):
 	global main_channel
 	global round
-	if guess == word:
+	global hints
+	if status == "correct":
 		embed = discord.Embed(title="정답자가 정답을 맞추었습니다!", description=f"정답은 {word}입니다.")
-	elif guess == "패스":
+	elif status == "pass":
 		embed = discord.Embed(title="정답자가 패스를 선언하였습니다.", description=f"정답은 {word}입니다.")
 	else:
 		embed = discord.Embed(title="아쉽게도 정답을 맞히지 못했습니다.", description=f"정답은 {word}이며, 추측한 답은 {guess}였습니다.")
 		round -= 1
+	embed.add_field(name="참가자들이 작성한 힌트들은 다음과 같습니다.", value=hints)
 	await main_channel.send(embed=embed)
 
 def judge_hints(hints):
@@ -179,7 +183,8 @@ async def on_message(message):
 	global word
 	global confirmed
 	global members
-
+	global checking
+	global judged_hints
 	await bot.process_commands(message)
 	if message.author.bot:
 		return
@@ -188,7 +193,16 @@ async def on_message(message):
 			if guesser == message.author:
 				if not hint_time:
 					guess = message.content
-					await judge_answer(guess, word)
+					if guess != "패스":
+						embed = discord.Embed(title="정답자가 추측을 끝냈습니다.", description="이제 정답인지 아닌지 판단하실 때입니다!")
+						embed.add_field(name=f"정답자가 추측한 답은 {guess}이고, 제시어는 {word}입니다.", value=f"정답이라고 생각하신다면 ⭕를, 틀렸다고 생각하시면 ❌를 눌러주세요!")
+						confirmer = members[1] if starter == guesser else starter
+						msg = await confirmer.send(embed=embed)
+						await msg.add_reaction("⭕")
+						await msg.add_reaction("❌")
+						checking = True
+					else:
+						judge_answer("pass", guess, word) 
 			else:
 				if hint_time:
 					if message.content in hints:
@@ -197,21 +211,38 @@ async def on_message(message):
 						hints[message.content] = [message.author.name]
 					if len(hints) >= len(members) - 1:
 						hint_time = False
-						hints = judge_hints(hints)
+						judged_hints = judge_hints(hints)
 						await main_channel.send("모든 참가자가 힌트를 제시하였습니다. 방장이 힌트를 검수 중입니다.")
 						str_hints = ""
-						for hint in hints:
-							str_hints += f"{hint}({hints[hint][0]}), "
+						for hint in judged_hints:
+							str_hints += f"{hint}({judged_hints[hint][0]}), "
 						str_hints = str_hints[:-2]
-						embed = discord.Embed(title="이제 힌트를 검수할 차례입니다!", description="의미상 중복된 힌트가 있다면 힌트 단어를 입력해주세요! 삭제된 힌트는 되돌릴 수 없으니 주의하시고요!")
+						embed = discord.Embed(title="이제 힌트를 검수할 차례입니다!")
 						embed.add_field(name="참가자들이 입력한 힌트는 다음과 같습니다.", value=str_hints)
-						embed.add_field(name=f"힌트 검수가 끝났다면, 제시어 {word}를 DM으로 보내주세요!")
+						embed.add_field(name=f"힌트 검수가 끝났다면, 제시어 {word}을(를) DM으로 보내주세요!", value="단어를 삭제하고 싶다면, 똑같은 단어를 입력해주세요! 삭제된 힌트는 되돌릴 수 없으니 주의하시고요!")
 						confirmer = members[1] if starter == guesser else starter 
 						await confirmer.send(embed=embed)
 				else:
 					confirmer = members[1] if starter == guesser else starter
 					if message.author == confirmer:
-						await confirm_hints(message.content, hints)
+						await confirm_hints(message.content, judged_hints)
 					if confirmed:
-						await start_guessing(hints)			
+						await main_channel.send("방장이 검수를 마쳤습니다. 정답자가 정답을 추측 중입니다.")
+						await start_guessing(hints)	
+
+@bot.event
+async def on_raw_reaction_add(payload):
+	global guess
+	global word
+	global checking
+	global guesser
+	global starter
+	confirmer = members[1] if starter == guesser else starter
+	if confirmer.id == payload.user_id:
+		if str(payload.emoji) == "⭕":
+			await judge_answer("correct", guess, word)
+			checking = False
+		elif str(payload.emoji) == "❌":
+			await judge_answer("wrong", guess, word)
+			checking = False
 bot.run(token)
