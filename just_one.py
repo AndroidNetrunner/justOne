@@ -195,20 +195,23 @@ async def on_message(message):
 						hints[message.content].append(message.author)
 					else:
 						hints[message.content] = [message.author.name]
-				if len(hints) >= len(members) - 1:
-					hint_time = False
-					hints = judge_hints(hints)
-					await main_channel.send("모든 참가자가 힌트를 제시하였습니다. 방장이 힌트를 검수 중입니다.")
-					str_hints = ""
-					for hint in hints:
-						str_hints += f"{hint}({hints[hint][0]}), "
-					str_hints = str_hints[:-2]
-					embed = discord.Embed(title="이제 힌트를 검수할 차례입니다!", description="의미상 중복된 힌트가 있다면 힌트 단어를 입력해주세요! 삭제된 힌트는 되돌릴 수 없으니 주의하시고요!")
-					embed.add_field(name="참가자들이 입력한 힌트는 다음과 같습니다.", value=str_hints)
-					confirmer = members[1] if starter == guesser else starter 
-					await confirmer.send(embed=embed)
-			if message.author == confirmer and not hint_time:
-				confirm_hints(message.content, hints)
-			if confirmed:
-				await start_guessing(hints)			
+					if len(hints) >= len(members) - 1:
+						hint_time = False
+						hints = judge_hints(hints)
+						await main_channel.send("모든 참가자가 힌트를 제시하였습니다. 방장이 힌트를 검수 중입니다.")
+						str_hints = ""
+						for hint in hints:
+							str_hints += f"{hint}({hints[hint][0]}), "
+						str_hints = str_hints[:-2]
+						embed = discord.Embed(title="이제 힌트를 검수할 차례입니다!", description="의미상 중복된 힌트가 있다면 힌트 단어를 입력해주세요! 삭제된 힌트는 되돌릴 수 없으니 주의하시고요!")
+						embed.add_field(name="참가자들이 입력한 힌트는 다음과 같습니다.", value=str_hints)
+						embed.add_field(name=f"힌트 검수가 끝났다면, 제시어 {word}를 DM으로 보내주세요!")
+						confirmer = members[1] if starter == guesser else starter 
+						await confirmer.send(embed=embed)
+				else:
+					confirmer = members[1] if starter == guesser else starter
+					if message.author == confirmer:
+						await confirm_hints(message.content, hints)
+					if confirmed:
+						await start_guessing(hints)			
 bot.run(token)
