@@ -27,7 +27,7 @@ word = None
 confirmed = None
 checking = False
 judged_hints = {}
-
+current_round = 0
 async def confirm_hints(msg, hints):
 	global word
 	global confirmed
@@ -40,6 +40,7 @@ async def judge_answer(status, guess, word):
 	global main_channel
 	global round
 	global hints
+	global current_round
 	if status == "correct":
 		embed = discord.Embed(title="정답자가 정답을 맞추었습니다!", description=f"정답은 {word}입니다.")
 	elif status == "pass":
@@ -49,6 +50,8 @@ async def judge_answer(status, guess, word):
 		round -= 1
 	embed.add_field(name="참가자들이 작성한 힌트들은 다음과 같습니다.", value=hints)
 	await main_channel.send(embed=embed)
+	current_round += 1
+	await start_round(current_round)
 
 def judge_hints(hints):
 	global starter
@@ -76,6 +79,7 @@ async def start_round(num):
 
 	hint_time = True
 	hints = {}
+	guesser = random.choice(members)
 	word = random.choice(words)
 	while word in already:
 		word = random.choice(words)
@@ -108,8 +112,7 @@ async def start_game():
 		elif member.dm_channel is None:
 			channel = await member.create_dm()
 		await channel.send(embed=embed)
-	guesser = random.choice(members)
-	await start_round(0)
+	await start_round(current_round)
 
 
 @bot.command()
@@ -131,6 +134,9 @@ async def 시작(ctx):
         name="참가 방법", value="게임에 참가하고 싶다면 !참가를 입력해주세요.", inline=False)
     await ctx.send(embed=embed)
 
+@bot.command()
+async def 재시작():
+	await start_game()
 
 @bot.command()
 async def 참가(ctx):
@@ -202,7 +208,7 @@ async def on_message(message):
 						await msg.add_reaction("❌")
 						checking = True
 					else:
-						judge_answer("pass", guess, word) 
+						await judge_answer("pass", guess, word) 
 			else:
 				if hint_time:
 					if message.content in hints:
