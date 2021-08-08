@@ -42,7 +42,7 @@ async def judge_answer(status, guess, word):
 	elif status == "pass":
 		embed = discord.Embed(title="정답자가 패스를 선언하였습니다.", description=f"정답은 {word}입니다.")
 	else:
-		embed = discord.Embed(title="아쉽게도 정답을 맞히지 못했습니다.", description=f"정답은 {word}이며, 추측한 답은 {guess}였습니다.")
+		embed = discord.Embed(title="아쉽게도 정답을 맞히지 못했습니다.", description=f"정답은 {word}이며, 추측한 답은 {guess}입니다.")
 		game_data['round'] -= 1
 	embed.add_field(name="참가자들이 작성한 힌트들은 다음과 같습니다.", value=game_data['hints'])
 	await game_data['main_channel'].send(embed=embed)
@@ -101,7 +101,6 @@ async def start_game():
 		await channel.send(embed=embed)
 	await start_round(game_data['current_round'])
 
-
 @bot.command()
 async def 시작(ctx):
     game_data['main_channel'] = ctx
@@ -132,7 +131,6 @@ async def 참가(ctx):
     else:
         await ctx.send("참가가 이미 마감되었습니다.")
 
-
 @bot.command()
 async def 마감(ctx):
 	# if len(members) < 3:
@@ -141,20 +139,18 @@ async def 마감(ctx):
 	if not game_data['round']:
 		await ctx.send("문제의 개수가 0개입니다. 단어 개수를 설정해주세요.")
 		return
-	if game_data['can_join'] == True:
+	if game_data['can_join']:
 		game_data['can_join'] = False
 		await ctx.send("참가가 마감되었습니다.")
 		await start_game()
 	else:
 		await ctx.send("현재 진행중인 게임이 없습니다.")
 
-
 @bot.command()
 async def 개수(ctx, number):
     if game_data['can_join']:
         game_data['round'] = int(number)
     await ctx.send(f'문제 개수가 {game_data["round"]}로 설정되었습니다.')
-
 
 @bot.event
 async def on_message(message):
@@ -182,6 +178,8 @@ async def on_message(message):
 						game_data['hints'][message.content].append(message.author)
 					else:
 						game_data['hints'][message.content] = [message.author.name]
+					await game_data['main_channel'].send(f"{message.author.name}님이 힌트를 제시하였습니다.")
+					await message.author.send(f"등록된 힌트: {message.content}")
 					if len(game_data['hints']) >= len(game_data['members']) - 1:
 						game_data['hint_time'] = False
 						game_data['judged_hints'] = judge_hints(game_data['hints'])
