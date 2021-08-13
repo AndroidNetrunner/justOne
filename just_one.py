@@ -28,7 +28,8 @@ game_data = {
 	'confirmed': None,
 	'checking': False,
 	'judged_hints': {},
-	'current_round': 0
+	'current_round': 0,
+	'hint_submission' : 0,
 }
 async def confirm_hints(msg, hints):
 	if msg == game_data['word']:
@@ -68,6 +69,7 @@ async def start_guessing(hints):
 async def start_round(num):
 	game_data['hint_time'] = True
 	game_data['hints'] = {}
+	game_data['hint_submission'] = 0
 	game_data['guesser'] = random.choice(game_data['members'])
 	game_data['word'] = random.choice(game_data['words'])
 	while game_data['word'] in game_data['already']:
@@ -178,9 +180,10 @@ async def on_message(message):
 						game_data['hints'][message.content].append(message.author)
 					else:
 						game_data['hints'][message.content] = [message.author.name]
+					game_data['hint_submission'] += 1
 					await game_data['main_channel'].send(f"{message.author.name}님이 힌트를 제시하였습니다.")
 					await message.author.send(f"등록된 힌트: {message.content}")
-					if len(game_data['hints']) >= len(game_data['members']) - 1:
+					if game_data['hint_submission'] >= len(game_data['members']) - 1:
 						game_data['hint_time'] = False
 						game_data['judged_hints'] = judge_hints(game_data['hints'])
 						await game_data['main_channel'].send("모든 참가자가 힌트를 제시하였습니다. 방장이 힌트를 검수 중입니다.")
