@@ -27,7 +27,6 @@ game_data = {
 	'word': None,
 	'confirmed': None,
 	'checking': False,
-	'judged_hints': {},
 	'current_round': 0,
 	'hint_submission' : 0,
 }
@@ -49,12 +48,6 @@ async def judge_answer(status, guess, word):
 	await game_data['main_channel'].send(embed=embed)
 	game_data['current_round'] += 1
 	await start_round(game_data['current_round'])
-
-def judge_hints(hints):
-	for word in hints:
-		if len(hints[word]) != 1:
-			del hints[word]
-	return hints
 		
 async def start_guessing(hints):
 	embed = discord.Embed(title="이제 당신의 차례입니다!")
@@ -177,7 +170,7 @@ async def on_message(message):
 			else:
 				if game_data['hint_time']:
 					if message.content in game_data['hints']:
-						game_data['hints'][message.content].append(message.author)
+						game_data['hints'][message.content].append(message.author.name)
 					else:
 						game_data['hints'][message.content] = [message.author.name]
 					game_data['hint_submission'] += 1
@@ -185,11 +178,10 @@ async def on_message(message):
 					await message.author.send(f"등록된 힌트: {message.content}")
 					if game_data['hint_submission'] >= len(game_data['members']) - 1:
 						game_data['hint_time'] = False
-						game_data['judged_hints'] = judge_hints(game_data['hints'])
 						await game_data['main_channel'].send("모든 참가자가 힌트를 제시하였습니다. 방장이 힌트를 검수 중입니다.")
 						str_hints = ""
-						for hint in game_data['judged_hints']:
-							str_hints += f"{hint}({game_data['judged_hints'][hint][0]}), "
+						for hint in game_data['hints']:
+							str_hints += f"{hint}{game_data['hints'][hint]}, "
 						str_hints = str_hints[:-2]
 						embed = discord.Embed(title="이제 힌트를 검수할 차례입니다!")
 						embed.add_field(name="참가자들이 입력한 힌트는 다음과 같습니다.", value=str_hints)
@@ -199,7 +191,7 @@ async def on_message(message):
 				else:
 					confirmer = game_data['members'][1] if game_data['starter'] == game_data['guesser'] else game_data['starter']
 					if message.author == confirmer:
-						await confirm_hints(message.content, game_data['judged_hints'])
+						await confirm_hints(message.content, game_data['hints'])
 					if game_data['confirmed']:
 						await game_data['main_channel'].send("방장이 검수를 마쳤습니다. 정답자가 정답을 추측 중입니다.")
 						await start_guessing(game_data['hints'])	
