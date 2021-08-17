@@ -29,6 +29,7 @@ game_data = {
 	'checking': False,
 	'current_round': 0,
 	'hint_submission' : 0,
+	'submitted_hints' : ""
 }
 async def confirm_hints(msg, hints):
 	if msg == game_data['word']:
@@ -44,7 +45,7 @@ async def judge_answer(status, guess, word):
 	else:
 		embed = discord.Embed(title="아쉽게도 정답을 맞히지 못했습니다.", description=f"정답은 {word}이며, 추측한 답은 {guess}입니다.")
 		game_data['round'] -= 1
-	embed.add_field(name="참가자들이 작성한 힌트들은 다음과 같습니다.", value=game_data['hints'])
+	embed.add_field(name="참가자들이 작성한 힌트들은 다음과 같습니다.", value=game_data['submitted_hints'])
 	await game_data['main_channel'].send(embed=embed)
 	game_data['current_round'] += 1
 	await start_round(game_data['current_round'])
@@ -55,9 +56,12 @@ async def start_guessing(hints):
 	for hint in hints:
 		str_hints += f"{hint}({hints[hint][0]}), "
 	str_hints = str_hints[:-2]
-	embed.add_field(name="힌트들을 보고 제시어를 DM으로 보내주세요!", value=f"힌트는 {str_hints}입니다.")
+	embed.add_field(name="힌트들을 보고 답안을 DM으로 보내주세요!", value="힌트는 메인 채널에서 확인할 수 있습니다.")
 	embed.add_field(name="만약 패스를 하고 싶다면,", value="채팅창에 '패스'라고 입력해주세요!")
 	await game_data['guesser'].send(embed=embed)
+	embed = discord.Embed(title="힌트 검수가 끝났습니다.", description="정답자는 다음 힌트들을 보고 답을 DM으로 보내주세요!")
+	embed.add_field(name="주어진 힌트들은 다음과 같습니다.", value=f"{str_hints if str_hints else '힌트가 모두 사라졌습니다...'}")
+	await game_data['main_channel'].send(embed=embed)
 
 async def start_round(num):
 	game_data['hint_time'] = True
@@ -65,6 +69,7 @@ async def start_round(num):
 	game_data['hint_submission'] = 0
 	game_data['guesser'] = random.choice(game_data['members'])
 	game_data['word'] = random.choice(game_data['words'])
+	game_data['confirmed'] = False
 	while game_data['word'] in game_data['already']:
 		game_data['word'] = random.choice(game_data['words'])
 	if num >= game_data['round']:
@@ -183,6 +188,7 @@ async def on_message(message):
 						for hint in game_data['hints']:
 							str_hints += f"{hint}{game_data['hints'][hint]}, "
 						str_hints = str_hints[:-2]
+						game_data['submitted_hints'] = str_hints
 						embed = discord.Embed(title="이제 힌트를 검수할 차례입니다!")
 						embed.add_field(name="참가자들이 입력한 힌트는 다음과 같습니다.", value=str_hints)
 						embed.add_field(name=f"힌트 검수가 끝났다면, 제시어 {game_data['word']}을(를) DM으로 보내주세요!", value="단어를 삭제하고 싶다면, 똑같은 단어를 입력해주세요! 삭제된 힌트는 되돌릴 수 없으니 주의하시고요!")
