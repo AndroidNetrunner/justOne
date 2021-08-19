@@ -133,9 +133,9 @@ async def 참가(ctx):
 
 @bot.command()
 async def 마감(ctx):
-	# if len(members) < 3:
-	# 	await ctx.send("플레이어 수가 2명 이하입니다. 게임을 시작할 수 없습니다.")
-	# 	return
+	if len(game_data['members']) < 3:
+		await ctx.send("플레이어 수가 2명 이하입니다. 게임을 시작할 수 없습니다.")
+		return
 	if not game_data['round']:
 		await ctx.send("문제의 개수가 0개입니다. 단어 개수를 설정해주세요.")
 		return
