@@ -53,6 +53,7 @@ async def start_round(num):
 	game_data['guesser'] = random.choice(game_data['members'])
 	game_data['word'] = random.choice(game_data['words'])
 	game_data['confirmed'] = False
+	await game_data['main_channel'].send(f"이번 라운드의 정답자는 {game_data['guesser'].name}입니다.")
 	while game_data['word'] in game_data['already']:
 		game_data['word'] = random.choice(game_data['words'])
 	if num >= game_data['round']:
@@ -73,9 +74,9 @@ async def start_game():
 	embed = discord.Embed(title="Just One 게임이 시작되었습니다!",
                        description="사용 방법을 설명드릴게요~")
 	embed.add_field(name="힌트 제공자라면,",
-	                value="제시어가 주어질 거에요! 정답자가 제시어를 맞출 수 있도록 한 단어짜리 힌트를 주시면 됩니다. 결정적이어도 되지만, 겹친다면 힌트를 보여줄 수 없으니 최대한 겹치지 않도록 주세요!")
+	                value="제시어가 주어질 거에요! 정답자가 제시어를 맞출 수 있도록 한 단어짜리 힌트를 주시면 됩니다. 결정적이어도 되지만, 겹친다면 힌트를 보여줄 수 없으니 최대한 겹치지 않도록 주세요!", inline=False)
 	embed.add_field(
-		name="정답자라면,", value="힌트 제공자들이 힌트를 비교한 후, 제가 힌트를 전해줄 거에요! 그 때 DM으로 정답으로 생각되는 단어를 적어주시면 됩니다!")
+		name="정답자라면,", value="힌트 제공자들이 힌트를 비교한 후, 제가 힌트를 전해줄 거에요! 그 때 DM으로 정답으로 생각되는 단어를 적어주시면 됩니다!", inline=False)
 	for member in game_data['members']:
 		if member.dm_channel:
 			channel = member.dm_channel
@@ -146,6 +147,7 @@ async def on_message(message):
 				if not game_data['hint_time']: # 정답 추측
 					game_data['guess'] = message.content
 					if game_data['guess'] != "패스":
+						await game_data['main_channel'].send("정답자가 정답을 제출하였습니다. 방장이 정답을 판단하고 있습니다.")
 						await judge_guess()
 					else:
 						await judge_answer("pass", game_data['guess'], game_data['word']) 
@@ -167,8 +169,8 @@ async def on_message(message):
 						str_hints = str_hints[:-2]
 						game_data['submitted_hints'] = str_hints
 						embed = discord.Embed(title="이제 힌트를 검수할 차례입니다!")
-						embed.add_field(name="참가자들이 입력한 힌트는 다음과 같습니다.", value=str_hints)
-						embed.add_field(name=f"힌트 검수가 끝났다면, 제시어 {game_data['word']}을(를) DM으로 보내주세요!", value="단어를 삭제하고 싶다면, 똑같은 단어를 입력해주세요! 삭제된 힌트는 되돌릴 수 없으니 주의하시고요!")
+						embed.add_field(name="참가자들이 입력한 힌트는 다음과 같습니다.", value=str_hints, inline=False)
+						embed.add_field(name=f"힌트 검수가 끝났다면, 제시어 {game_data['word']}을(를) DM으로 보내주세요!", value="단어를 삭제하고 싶다면, 똑같은 단어를 입력해주세요! 삭제된 힌트는 되돌릴 수 없으니 주의하시고요!", inline=False)
 						confirmer = game_data['members'][1] if game_data['starter'] == game_data['guesser'] else game_data['starter']
 						await confirmer.send(embed=embed)
 				else: # 힌트 검수 중 
