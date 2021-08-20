@@ -1,36 +1,19 @@
 import asyncio
+from guess import judge_guess
 import discord
 import random
 from discord import activity
 from discord.abc import User
 from discord.enums import Status
 from discord.ext import commands
+from game_data import game_data
 
 token = open("C:/Users/byukim/Documents/python/discord_bot/Just one/token.txt",
              'r').read()
 game = discord.Game("현재 대기")
 bot = commands.Bot(command_prefix='!',
                    status=discord.Status.online, activity=game)
-game_data = {
-	'members': [],
-	'round': 13,
-	'hints': {},
-	'words' : open("C:/Users/byukim/Documents/python/discord_bot/Just one/word_list.txt",
-             'r', encoding='UTF-8').read().split('\n'),
-	'already': [],
-	'guesser': None,
-	'main_channel': None,
-	'guess': None,
-	'start': False,
-	'hint_time': False,
-	'starter': None,
-	'word': None,
-	'confirmed': None,
-	'checking': False,
-	'current_round': 0,
-	'hint_submission' : 0,
-	'submitted_hints' : ""
-}
+
 async def confirm_hints(msg, hints):
 	if msg == game_data['word']:
 		game_data['confirmed'] = True
@@ -160,20 +143,14 @@ async def on_message(message):
 	if game_data['start'] == True and game_data['can_join'] == False:
 		if message.channel.type.name == "private":
 			if game_data['guesser'] == message.author:
-				if not game_data['hint_time']:
+				if not game_data['hint_time']: # 정답 추측
 					game_data['guess'] = message.content
 					if game_data['guess'] != "패스":
-						embed = discord.Embed(title="정답자가 추측을 끝냈습니다.", description="이제 정답인지 아닌지 판단하실 때입니다!")
-						embed.add_field(name=f"정답자가 추측한 답은 {game_data['guess']}이고, 제시어는 {game_data['word']}입니다.", value=f"정답이라고 생각하신다면 ⭕를, 틀렸다고 생각하시면 ❌를 눌러주세요!")
-						confirmer = game_data['members'][1] if game_data['starter'] == game_data['guesser'] else game_data['starter']
-						msg = await confirmer.send(embed=embed)
-						await msg.add_reaction("⭕")
-						await msg.add_reaction("❌")
-						checking = True
+						await judge_guess()
 					else:
 						await judge_answer("pass", game_data['guess'], game_data['word']) 
 			else:
-				if game_data['hint_time']:
+				if game_data['hint_time']: # 힌트 제시
 					if message.content in game_data['hints']:
 						game_data['hints'][message.content].append(message.author.name)
 					else:
@@ -181,7 +158,7 @@ async def on_message(message):
 					game_data['hint_submission'] += 1
 					await game_data['main_channel'].send(f"{message.author.name}님이 힌트를 제시하였습니다.")
 					await message.author.send(f"등록된 힌트: {message.content}")
-					if game_data['hint_submission'] >= len(game_data['members']) - 1:
+					if game_data['hint_submission'] >= len(game_data['members']) - 1: # 힌트 검수 시작
 						game_data['hint_time'] = False
 						await game_data['main_channel'].send("모든 참가자가 힌트를 제시하였습니다. 방장이 힌트를 검수 중입니다.")
 						str_hints = ""
@@ -194,11 +171,11 @@ async def on_message(message):
 						embed.add_field(name=f"힌트 검수가 끝났다면, 제시어 {game_data['word']}을(를) DM으로 보내주세요!", value="단어를 삭제하고 싶다면, 똑같은 단어를 입력해주세요! 삭제된 힌트는 되돌릴 수 없으니 주의하시고요!")
 						confirmer = game_data['members'][1] if game_data['starter'] == game_data['guesser'] else game_data['starter']
 						await confirmer.send(embed=embed)
-				else:
+				else: # 힌트 검수 중 
 					confirmer = game_data['members'][1] if game_data['starter'] == game_data['guesser'] else game_data['starter']
 					if message.author == confirmer:
-						await confirm_hints(message.content, game_data['hints'])
-					if game_data['confirmed']:
+						await confirm_hints(message.content, game_data['hints']) # 힌트 삭제
+					if game_data['confirmed']: # 힌트 검수 마감
 						await game_data['main_channel'].send("방장이 검수를 마쳤습니다. 정답자가 정답을 추측 중입니다.")
 						await start_guessing(game_data['hints'])	
 
@@ -208,8 +185,6 @@ async def on_raw_reaction_add(payload):
 	if confirmer.id == payload.user_id:
 		if str(payload.emoji) == "⭕":
 			await judge_answer("correct", game_data['guess'], game_data["word"])
-			checking = False
 		elif str(payload.emoji) == "❌":
 			await judge_answer("wrong", game_data['guess'], game_data['word'])
-			checking = False
 bot.run(token)

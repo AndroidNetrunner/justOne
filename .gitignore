@@ -1,2 +1,4 @@
 token.txt
 word_list.txt
+__pycache__
+.gitignore

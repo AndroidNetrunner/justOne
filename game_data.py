@@ -1,0 +1,20 @@
+game_data = {
+	'members': [],
+	'round': 13,
+	'hints': {},
+	'words' : open("C:/Users/byukim/Documents/python/discord_bot/Just one/word_list.txt",
+             'r', encoding='UTF-8').read().split('\n'),
+	'already': [],
+	'guesser': None,
+	'main_channel': None,
+	'guess': None,
+	'start': False,
+	'hint_time': False,
+	'starter': None,
+	'word': None,
+	'confirmed': None,
+	'checking': False,
+	'current_round': 0,
+	'hint_submission' : 0,
+	'submitted_hints' : ""
+}
