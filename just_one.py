@@ -118,6 +118,7 @@ async def 시작(ctx):
     current_game.members.append(current_game.starter)
     current_game.start = True
     current_game.can_join = True
+    await bot.change_presence(activity=discord.Game(name="게임 진행"))
     embed = discord.Embed(title="Just One에 오신 것을 환영합니다!",
                           desciption="Just One은 정답자에게 겹치지 않는 힌트를 줘야하는 협력 게임입니다. 제시어를 보고 다른 사람들이 적지 않을만한 힌트를 적어주세요!")
     embed.add_field(
