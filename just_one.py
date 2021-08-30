@@ -16,7 +16,6 @@ bot = commands.Bot(command_prefix='~',
 
 active_game = {}
 
-
 async def confirm_hints(msg, current_game):
     hints = current_game.hints
     if msg.content == current_game.word:
@@ -176,12 +175,13 @@ async def 개수(ctx, number):
 
 @bot.event
 async def on_message(message):
+    current_game = None
     await bot.process_commands(message)
     for channel_id in active_game:
         if message.author in active_game[channel_id].members:
             current_game = active_game[channel_id]
             break
-    if message.author.bot:
+    if message.author.bot or not current_game:
         return
     if current_game.start == True and current_game.can_join == False:
         if message.channel.type.name == "private":
