@@ -44,7 +44,6 @@ async def judge_answer(status, current_game):
     current_game.current_round += 1
     await start_round(current_game)
 
-
 async def start_guessing(current_game):
     hints = current_game.hints
     embed = discord.Embed(title="이제 당신의 차례입니다!")
@@ -61,7 +60,6 @@ async def start_guessing(current_game):
     embed.add_field(name="주어진 힌트들은 다음과 같습니다.",
                     value=f"{str_hints if str_hints else '힌트가 모두 사라졌습니다...'}")
     await current_game.main_channel.send(embed=embed)
-
 
 async def start_round(current_game):
 	current_game.hint_time = True
@@ -86,7 +84,6 @@ async def start_round(current_game):
 			                      description=f"정답자가 제시어를 맞출 수 있도록 힌트 단어를 주세요. 제시어는 {current_game.word} 입니다.")
 		await member.dm_channel.send(embed=embed)
 
-
 async def start_game(current_game):
 	current_game.start = True
 	embed = discord.Embed(title="Just One 게임이 시작되었습니다!",
@@ -103,7 +100,6 @@ async def start_game(current_game):
 		await channel.send(embed=embed)
 	await start_round(current_game)
 
-
 @bot.command()
 async def 시작(ctx):
     if ctx.channel.id in active_game:
@@ -112,7 +108,6 @@ async def 시작(ctx):
     current_game = game_data()
     active_game[ctx.channel.id] = current_game
     current_game.main_channel = ctx
-    game.name = "게임 진행"
     current_game.starter = ctx.message.author
     current_game.members.append(current_game.starter)
     current_game.start = True
@@ -123,7 +118,6 @@ async def 시작(ctx):
     embed.add_field(
         name="참가 방법", value="게임에 참가하고 싶다면 ~참가를 입력해주세요.", inline=False)
     await ctx.send(embed=embed)
-
 
 @bot.command()
 async def 리셋(ctx):
@@ -228,11 +222,14 @@ async def on_message(message):
 
 @bot.event
 async def on_raw_reaction_add(payload):
+    current_game = None
     for channel_id in active_game:
         for member in active_game[channel_id].members:
             if payload.user_id == member.id:
                 current_game = active_game[channel_id]
                 break
+    if not current_game:
+        return
     confirmer = current_game.members[1] if current_game.starter == current_game.guesser else current_game.starter
     if confirmer.id == payload.user_id:
         if str(payload.emoji) == "⭕":
