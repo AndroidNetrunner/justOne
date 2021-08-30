@@ -11,7 +11,7 @@ from game_data import game_data
 token = open("token.txt",
              'r').read()
 game = discord.Game("현재 대기")
-bot = commands.Bot(command_prefix='!',
+bot = commands.Bot(command_prefix='~',
                    status=discord.Status.online, activity=game)
 
 active_game = {}
@@ -122,7 +122,7 @@ async def 시작(ctx):
     embed = discord.Embed(title="Just One에 오신 것을 환영합니다!",
                           desciption="Just One은 정답자에게 겹치지 않는 힌트를 줘야하는 협력 게임입니다. 제시어를 보고 다른 사람들이 적지 않을만한 힌트를 적어주세요!")
     embed.add_field(
-        name="참가 방법", value="게임에 참가하고 싶다면 !참가를 입력해주세요.", inline=False)
+        name="참가 방법", value="게임에 참가하고 싶다면 ~참가를 입력해주세요.", inline=False)
     await ctx.send(embed=embed)
 
 
