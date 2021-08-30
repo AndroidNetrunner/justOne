@@ -194,6 +194,8 @@ async def on_message(message):
                         if message.author.name in current_game.hints[word]:
                             current_game.hints[word].remove(message.author.name)
                             current_game.hint_submission -= 1
+                            if not current_game.hints[word]:
+                                del current_game.hints[word]
                             break
                     if message.content in current_game.hints:
                         current_game.hints[message.content].append(message.author.name)
