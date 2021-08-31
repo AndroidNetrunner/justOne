@@ -24,7 +24,6 @@ async def confirm_hints(msg, current_game):
         del hints[msg.content]
         await msg.channel.send(f"{msg.content}이(가) 삭제되었습니다.")
 
-
 async def judge_answer(status, current_game):
     word = current_game.word
     guess = current_game.guess
