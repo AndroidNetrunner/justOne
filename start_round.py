@@ -1,0 +1,26 @@
+import random
+import discord
+
+async def start_round(current_game):
+    current_game.hint_time = True
+    current_game.hints = {}
+    current_game.hint_submission = 0
+    current_game.guesser = random.choice(current_game.members)
+    current_game.word = random.choice(current_game.words)
+    current_game.confirmed = False
+    while current_game.word in current_game.already:
+        current_game.word = random.choice(current_game.words)
+    current_game.already.append(current_game.word)
+    if current_game.current_round >= current_game.round:
+        embed = discord.Embed(title="모든 게임이 종료되었습니다!")
+        await current_game.main_channel.send(embed=embed)
+        return
+    await current_game.main_channel.send(f"이번 라운드의 정답자는 {current_game.guesser.name}입니다.")
+    for member in current_game.members:
+        if member == current_game.guesser:
+            embed = discord.Embed(title="당신은 이번 라운드의 정답자입니다.",
+                                    description="힌트 제공자들이 힌트를 줄 동안 잠시만 기다려주세요~")
+        else:
+            embed = discord.Embed(title="당신은 이번 라운드의 힌트 제공자입니다.",
+                                    description=f"정답자가 제시어를 맞출 수 있도록 힌트 단어를 주세요. 제시어는 {current_game.word} 입니다.")
+        await member.dm_channel.send(embed=embed)
