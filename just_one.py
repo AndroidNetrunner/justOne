@@ -10,7 +10,7 @@ from game_data import game_data, active_game
 from guess import judge_guess, start_guessing, judge_answer
 from start_game import start_game
 from start_round import start_round
-from hints import submit_hint, check_hints, confirm_hints
+from hints import submit_hint, start_checking_hints, confirm_hints
 
 token = open("token.txt",
              'r').read()
@@ -41,7 +41,6 @@ async def 시작(ctx):
 async def 리셋(ctx):
     del active_game[ctx.channel.id]
     await ctx.send("게임이 초기화되었습니다.")
-
 
 @bot.command()
 async def 참가(ctx):
@@ -76,13 +75,14 @@ async def 마감(ctx):
     else:
         await ctx.send("현재 진행중인 게임이 없습니다.")
 
-
 @bot.command()
 async def 개수(ctx, number):
     current_game = active_game[ctx.channel.id]
     if current_game.can_join:
         current_game.round = int(number)
-    await ctx.send(f'문제 개수가 {current_game.round}로 설정되었습니다.')
+        await ctx.send(f'문제 개수가 {current_game.round}로 설정되었습니다.')
+    else:
+        await ctx.send("게임을 시작한 이후에는 단어 개수를 변경할 수 없습니다.")
 
 @bot.event
 async def on_message(message):
@@ -102,9 +102,8 @@ async def on_message(message):
             else:
                 if current_game.hint_time:  # 힌트 제시
                     submit_hint(current_game, message)
-                    # 힌트 검수 시작
-                    if current_game.hint_submission >= len(current_game.members) - 1:
-                        check_hints(current_game)
+                    if current_game.hint_submission >= len(current_game.members) - 1: # 힌트 검수 시작
+                        start_checking_hints(current_game)
                 else:  # 힌트 검수 중
                     confirmer = current_game.members[1] if current_game.starter == current_game.guesser else current_game.starter
                     if message.author == confirmer:

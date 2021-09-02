@@ -7,6 +7,7 @@ async def judge_answer(status, current_game):
     if status == "correct":
     	embed = discord.Embed(title="정답자가 정답을 맞추었습니다!",
     	                      description=f"정답은 {word}입니다.")
+        current_game.correct += 1
     elif status == "pass":
     	embed = discord.Embed(title="정답자가 패스를 선언하였습니다.",
     	                      description=f"정답은 {word}입니다.")

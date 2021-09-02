@@ -12,10 +12,10 @@ async def start_round(current_game):
         current_game.word = random.choice(current_game.words)
     current_game.already.append(current_game.word)
     if current_game.current_round >= current_game.round:
-        embed = discord.Embed(title="모든 게임이 종료되었습니다!")
+        embed = discord.Embed(title="모든 게임이 종료되었습니다!", description=f"{current_game.round}개의 문제 중 {current_game.correct}개의 정답을 맞추셨습니다.")
         await current_game.main_channel.send(embed=embed)
         return
-    await current_game.main_channel.send(f"이번 라운드의 정답자는 {current_game.guesser.name}입니다.")
+    await current_game.main_channel.send(f"{current_game.current_round + 1} 라운드의 정답자는 {current_game.guesser.name}입니다.")
     for member in current_game.members:
         if member == current_game.guesser:
             embed = discord.Embed(title="당신은 이번 라운드의 정답자입니다.",

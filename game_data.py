@@ -18,5 +18,6 @@ class game_data:
         self.hint_submission = 0
         self.submitted_hints = ""
         self.submitted = {}
-
+        self.correct = 0
+        
 active_game = {}

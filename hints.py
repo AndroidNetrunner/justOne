@@ -17,7 +17,7 @@ async def submit_hint(current_game, message):
         await current_game.main_channel.send(f"{message.author.name}님이 힌트를 제시하였습니다.")
         await message.author.send(f"등록된 힌트: {message.content}")
 
-async def check_hints(current_game, message):
+async def start_checking_hints(current_game):
     current_game.hint_time = False
     await current_game.main_channel.send("모든 참가자가 힌트를 제시하였습니다. 방장이 힌트를 검수 중입니다.")
     str_hints = ""
