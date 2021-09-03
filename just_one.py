@@ -14,7 +14,7 @@ from hints import submit_hint, start_checking_hints, confirm_hints
 
 token = open("token.txt",
              'r').read()
-game = discord.Game("현재 대기")
+game = discord.Game("도움말은 ~help 입력")
 bot = commands.Bot(command_prefix='~',
                    status=discord.Status.online, activity=game)
 
@@ -57,7 +57,6 @@ async def 참가(ctx):
             await ctx.send("{}님은 이미 참가중입니다.".format(player.name))
     else:
         await ctx.send("참가가 이미 마감되었습니다.")
-
 
 @bot.command()
 async def 마감(ctx):
