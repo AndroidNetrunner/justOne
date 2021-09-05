@@ -1,5 +1,5 @@
 import discord
-import start_round
+from start_round import start_round
 
 async def judge_answer(status, current_game):
     word = current_game.word
