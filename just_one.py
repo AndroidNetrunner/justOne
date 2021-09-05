@@ -100,7 +100,7 @@ async def on_message(message):
                         await judge_answer("pass", current_game)
             else:
                 if current_game.hint_time:  # 힌트 제시
-                    submit_hint(current_game, message)
+                    await submit_hint(current_game, message)
                     if current_game.hint_submission >= len(current_game.members) - 1: # 힌트 검수 시작
                         start_checking_hints(current_game)
                 else:  # 힌트 검수 중
