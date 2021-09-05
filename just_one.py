@@ -39,8 +39,11 @@ async def 시작(ctx):
 
 @bot.command()
 async def 리셋(ctx):
-    del active_game[ctx.channel.id]
-    await ctx.send("게임이 초기화되었습니다.")
+    if ctx.channel.id in active_game:
+        del active_game[ctx.channel.id]
+        await ctx.send("게임이 초기화되었습니다.")
+    else:
+        await ctx.send("시작한 게임이 존재하지 않습니다.")
 
 @bot.command()
 async def 참가(ctx):

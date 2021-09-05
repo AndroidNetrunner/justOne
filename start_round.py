@@ -1,5 +1,6 @@
 import random
 import discord
+from game_data import active_game
 
 async def start_round(current_game):
     current_game.hint_time = True
@@ -12,6 +13,7 @@ async def start_round(current_game):
         current_game.word = random.choice(current_game.words)
     current_game.already.append(current_game.word)
     if current_game.current_round >= current_game.round:
+        del active_game[current_game.main_channel.channel.id]
         embed = discord.Embed(title="모든 게임이 종료되었습니다!", description=f"{current_game.round}개의 문제 중 {current_game.correct}개의 정답을 맞추셨습니다.")
         await current_game.main_channel.send(embed=embed)
         return
