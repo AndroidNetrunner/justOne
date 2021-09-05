@@ -9,13 +9,13 @@ async def submit_hint(current_game, message):
             if not current_game.hints[word]:
                 del current_game.hints[word]
             break
-        if message.content in current_game.hints:
-            current_game.hints[message.content].append(message.author.name)
-        else:
-            current_game.hints[message.content] = [message.author.name]
-        current_game.hint_submission += 1
-        await current_game.main_channel.send(f"{message.author.name}님이 힌트를 제시하였습니다.")
-        await message.author.send(f"등록된 힌트: {message.content}")
+    if message.content in current_game.hints:
+        current_game.hints[message.content].append(message.author.name)
+    else:
+        current_game.hints[message.content] = [message.author.name]
+    current_game.hint_submission += 1
+    await current_game.main_channel.send(f"{message.author.name}님이 힌트를 제시하였습니다.")
+    await message.author.send(f"등록된 힌트: {message.content}")
 
 async def start_checking_hints(current_game):
     current_game.hint_time = False
