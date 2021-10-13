@@ -12,14 +12,12 @@ from guess import judge_guess, start_guessing, judge_answer
 from start_game import start_game
 from start_round import start_round
 from hints import submit_hint, start_checking_hints, confirm_hints
-from threading import Lock
 
 token = open("token.txt",
              'r').read()
 game = discord.Game("도움말은 ~help 입력")
 bot = commands.Bot(command_prefix='~',
                    status=discord.Status.online, activity=game)
-lock = Lock()
 @bot.command()
 async def 시작(ctx):
     if ctx.channel.id in active_game:
@@ -105,11 +103,9 @@ async def on_message(message):
                         await judge_answer("pass", current_game)
             else:
                 if current_game.hint_time:  # 힌트 제시
-                    lock.acquire()
                     await submit_hint(current_game, message)
                     if current_game.hint_submission >= len(current_game.members) - 1: # 힌트 검수 시작
                         await start_checking_hints(current_game)
-                    lock.release()
                 else:  # 힌트 검수 중
                     confirmer = current_game.members[1] if current_game.starter == current_game.guesser else current_game.starter
                     if message.author == confirmer:
