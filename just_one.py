@@ -1,4 +1,5 @@
 import asyncio
+from asyncio.locks import Lock
 import discord
 import random
 import datetime
@@ -18,6 +19,8 @@ token = open("token.txt",
 game = discord.Game("도움말은 ~help 입력")
 bot = commands.Bot(command_prefix='~',
                    status=discord.Status.online, activity=game)
+lock_for_submission = Lock()
+
 @bot.command()
 async def 시작(ctx):
     if ctx.channel.id in active_game:
@@ -103,7 +106,7 @@ async def on_message(message):
                         await judge_answer("pass", current_game)
             else:
                 if current_game.hint_time:  # 힌트 제시
-                    await submit_hint(current_game, message)
+                    asyncio.ensure_future(submit_hint(current_game, message, lock_for_submission))
                     if current_game.hint_submission >= len(current_game.members) - 1: # 힌트 검수 시작
                         await start_checking_hints(current_game)
                 else:  # 힌트 검수 중
