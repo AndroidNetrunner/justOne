@@ -30,6 +30,15 @@ async def judge_guess(game_data):
     await msg.add_reaction("⭕")
     await msg.add_reaction("❌")
 
+async def submit_guess(current_game, message):
+    if current_game.hint_time:
+        return
+    current_game.guess = message.content
+    if current_game.guess != "패스":
+        await judge_guess(current_game)
+    else:
+        await judge_answer("pass", current_game)
+
 async def start_guessing(current_game):
     hints = current_game.hints
     embed = discord.Embed(title="이제 당신의 차례입니다!")

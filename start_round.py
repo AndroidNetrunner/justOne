@@ -3,20 +3,9 @@ import discord
 from game_data import active_game
 
 async def start_round(current_game):
-    current_game.hint_time = True
-    current_game.hints = {}
-    current_game.hint_submission = 0
-    current_game.guesser = random.choice(current_game.members)
-    current_game.word = random.choice(current_game.words)
-    current_game.confirmed = False
-    while current_game.word in current_game.already:
-        current_game.word = random.choice(current_game.words)
-    current_game.already.append(current_game.word)
+    reset_round(current_game)
     if current_game.current_round >= current_game.round:
-        del active_game[current_game.main_channel.channel.id]
-        embed = discord.Embed(title="모든 게임이 종료되었습니다!", description=f"{current_game.round}개의 문제 중 {current_game.correct}개의 정답을 맞추셨습니다.")
-        await current_game.main_channel.send(embed=embed)
-        return
+        return show_result(current_game)
     await current_game.main_channel.send(f"{current_game.current_round + 1} 라운드의 정답자는 {current_game.guesser.name}입니다.")
     for member in current_game.members:
         if member == current_game.guesser:
@@ -26,3 +15,19 @@ async def start_round(current_game):
             embed = discord.Embed(title="당신은 이번 라운드의 힌트 제공자입니다.",
                                     description=f"정답자가 제시어를 맞출 수 있도록 힌트 단어를 주세요. 제시어는 {current_game.word} 입니다.")
         await member.dm_channel.send(embed=embed)
+
+async def reset_round(current_game):
+    current_game.hint_time = True
+    current_game.hints = {}
+    current_game.hint_submission = 0
+    current_game.guesser = random.choice(current_game.members)
+    current_game.word = random.choice(current_game.words)
+    current_game.confirmed = False
+    while current_game.word in current_game.already:
+        current_game.word = random.choice(current_game.words)
+    current_game.already.append(current_game.word)
+
+async def show_result(current_game):
+    del active_game[current_game.main_channel.channel.id]
+    embed = discord.Embed(title="모든 게임이 종료되었습니다!", description=f"{current_game.round}개의 문제 중 {current_game.correct}개의 정답을 맞추셨습니다.")
+    await current_game.main_channel.send(embed=embed)

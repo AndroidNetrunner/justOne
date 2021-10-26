@@ -1,18 +1,13 @@
 import asyncio
 from asyncio.locks import Lock
 import discord
-import random
 import datetime
-from discord import activity
-from discord.abc import User
-from discord.enums import Status
 from discord.ext import commands
 from utils import find_game_of_this_channel
 from game_data import game_data, active_game
-from guess import judge_guess, start_guessing, judge_answer
+from guess import judge_guess, start_guessing, judge_answer, submit_guess
 from start_game import start_game
-from start_round import start_round
-from hints import submit_hint, start_checking_hints, confirm_hints
+from hints import check_hints, submit_hint, start_checking_hints, delete_hints
 
 token = open("token.txt",
              'r').read()
@@ -93,29 +88,19 @@ async def 개수(ctx, number):
 async def on_message(message):
     await bot.process_commands(message)
     current_game = find_game_of_this_channel(active_game, message.author.id)
-    if message.author.bot or not current_game:
+    if message.author.bot:
         return
-    if current_game.start == True and current_game.can_join == False:
-        if message.channel.type.name == "private":
-            if current_game.guesser == message.author:
-                if not current_game.hint_time:  # 정답 추측
-                    current_game.guess = message.content
-                    if current_game.guess != "패스":
-                        await judge_guess(current_game)
-                    else:
-                        await judge_answer("pass", current_game)
-            else:
-                if current_game.hint_time:  # 힌트 제시
-                    asyncio.ensure_future(submit_hint(current_game, message, lock_for_submission))
-                    if current_game.hint_submission >= len(current_game.members) - 1: # 힌트 검수 시작
-                        await start_checking_hints(current_game)
-                else:  # 힌트 검수 중
-                    confirmer = current_game.members[1] if current_game.starter == current_game.guesser else current_game.starter
-                    if message.author == confirmer:
-                        await confirm_hints(message, current_game)  # 힌트 삭제
-                    if current_game.confirmed:  # 힌트 검수 마감
-                        await current_game.main_channel.send("방장이 검수를 마쳤습니다. 정답자가 정답을 추측 중입니다.")
-                        await start_guessing(current_game)
+    if not current_game or not current_game.start or current_game.can_join:
+        return
+    if message.channel.type.name != "private":
+        return
+    if current_game.guesser == message.author:
+        await submit_guess(current_game, message)
+    else:
+        if current_game.hint_time:  # 힌트 제시
+            await give_hint(current_game, message)
+        else:  # 힌트 검수 중
+            await check_hints(current_game, message)                    
 
 @bot.event
 async def on_raw_reaction_add(payload):
@@ -128,4 +113,13 @@ async def on_raw_reaction_add(payload):
             await judge_answer("correct", current_game)
         elif str(payload.emoji) == "❌":
             await judge_answer("wrong", current_game)
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandNotFound):
+        await ctx.send(f"{ctx.message.content} 는 존재하지 않는 명령어입니다.")
+    else:
+        await ctx.send("오류가 발생하였습니다. ~리셋을 통해 게임을 새로고침해주세요.")
+        print(f"Just One - {datetime.datetime.now()} : <Error> {ctx.channel.id}, error: {error}")
+
 bot.run(token)

@@ -1,6 +1,8 @@
 import asyncio
 import discord
 
+from guess import start_guessing
+
 async def submit_hint(current_game, message, lock):
     await lock.acquire()
     for word in current_game.hints:
@@ -35,7 +37,20 @@ async def start_checking_hints(current_game):
     confirmer = current_game.members[1] if current_game.starter == current_game.guesser else current_game.starter
     await confirmer.send(embed=embed)
 
-async def confirm_hints(msg, current_game):
+async def give_hint(current_game, message):
+    asyncio.ensure_future(submit_hint(current_game, message, lock_for_submission))
+    if current_game.hint_submission >= len(current_game.members) - 1: # 힌트 검수 시작
+        await start_checking_hints(current_game)
+
+async def check_hints(current_game, message):
+    confirmer = current_game.members[1] if current_game.starter == current_game.guesser else current_game.starter
+    if message.author == confirmer:
+        await delete_hints(message, current_game)  # 힌트 삭제
+    if current_game.confirmed:  # 힌트 검수 마감
+        await current_game.main_channel.send("방장이 검수를 마쳤습니다. 정답자가 정답을 추측 중입니다.")
+        await start_guessing(current_game)
+
+async def delete_hints(msg, current_game):
     hints = current_game.hints
     if msg.content == current_game.word:
         current_game.confirmed = True
