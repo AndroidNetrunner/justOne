@@ -37,8 +37,8 @@ async def start_checking_hints(current_game):
     confirmer = current_game.members[1] if current_game.starter == current_game.guesser else current_game.starter
     await confirmer.send(embed=embed)
 
-async def give_hint(current_game, message):
-    asyncio.ensure_future(submit_hint(current_game, message, lock_for_submission))
+async def give_hint(current_game, message, lock_for_submission):
+    await asyncio.ensure_future(submit_hint(current_game, message, lock_for_submission))
     if current_game.hint_submission >= len(current_game.members) - 1: # 힌트 검수 시작
         await start_checking_hints(current_game)
 

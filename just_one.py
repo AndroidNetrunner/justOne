@@ -7,7 +7,7 @@ from utils import find_game_of_this_channel
 from game_data import game_data, active_game
 from guess import judge_guess, start_guessing, judge_answer, submit_guess
 from start_game import start_game
-from hints import check_hints, submit_hint, start_checking_hints, delete_hints
+from hints import check_hints, give_hint, submit_hint, start_checking_hints, delete_hints
 
 token = open("token.txt",
              'r').read()
@@ -98,7 +98,7 @@ async def on_message(message):
         await submit_guess(current_game, message)
     else:
         if current_game.hint_time:  # 힌트 제시
-            await give_hint(current_game, message)
+            await give_hint(current_game, message, lock_for_submission)
         else:  # 힌트 검수 중
             await check_hints(current_game, message)                    
 

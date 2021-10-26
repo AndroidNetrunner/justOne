@@ -3,7 +3,7 @@ import discord
 from game_data import active_game
 
 async def start_round(current_game):
-    reset_round(current_game)
+    await reset_round(current_game)
     if current_game.current_round >= current_game.round:
         return show_result(current_game)
     await current_game.main_channel.send(f"{current_game.current_round + 1} 라운드의 정답자는 {current_game.guesser.name}입니다.")
