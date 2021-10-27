@@ -16,11 +16,7 @@ bot = commands.Bot(command_prefix='~',
                    status=discord.Status.online, activity=game)
 lock_for_submission = Lock()
 
-@bot.command()
-async def 시작(ctx):
-    if ctx.channel.id in active_game:
-        await ctx.send("이미 시작한 게임이 존재합니다.")
-        return
+def start_new_game(ctx):
     print(f"Just_one - {datetime.datetime.now()} : <start> {ctx.channel.id}")
     current_game = game_data()
     active_game[ctx.channel.id] = current_game
@@ -29,6 +25,13 @@ async def 시작(ctx):
     current_game.members.append(current_game.starter)
     current_game.start = True
     current_game.can_join = True
+    
+@bot.command()
+async def 시작(ctx):
+    if ctx.channel.id in active_game:
+        await ctx.send("이미 시작한 게임이 존재합니다.")
+        return
+    start_new_game(ctx)
     embed = discord.Embed(title="Just One에 오신 것을 환영합니다!",
                           desciption="Just One은 정답자에게 겹치지 않는 힌트를 줘야하는 협력 게임입니다. 제시어를 보고 다른 사람들이 적지 않을만한 힌트를 적어주세요!")
     embed.add_field(
@@ -88,31 +91,30 @@ async def 개수(ctx, number):
 async def on_message(message):
     await bot.process_commands(message)
     current_game = find_game_of_this_channel(active_game, message.author.id)
-    if message.author.bot:
+    if message.author.bot or message.channel.type.name != "private":
         return
     if not current_game or not current_game.start or current_game.can_join:
         return
-    if message.channel.type.name != "private":
-        return
     if current_game.guesser == message.author:
         await submit_guess(current_game, message)
-    else:
-        if current_game.hint_time:  # 힌트 제시
-            await give_hint(current_game, message, lock_for_submission)
-        else:  # 힌트 검수 중
-            await check_hints(current_game, message)                    
+        return
+    if current_game.hint_time:  # 힌트 제시
+        await give_hint(current_game, message, lock_for_submission)
+        return
+    await check_hints(current_game, message)                    
 
 @bot.event
 async def on_raw_reaction_add(payload):
     current_game = find_game_of_this_channel(active_game, payload.user_id)
     if not current_game:
         return
+    if not (str(payload.emoji) == "⭕" or str(payload.emoji) == "❌"):
+        return
     confirmer = current_game.members[1] if current_game.starter == current_game.guesser else current_game.starter
-    if confirmer.id == payload.user_id:
-        if str(payload.emoji) == "⭕":
-            await judge_answer("correct", current_game)
-        elif str(payload.emoji) == "❌":
-            await judge_answer("wrong", current_game)
+    if confirmer.id != payload.user_id:
+        return
+    result = "correct" if str(payload.emoji) == "⭕" else "wrong"
+    await judge_answer(result, current_game)
 
 @bot.event
 async def on_command_error(ctx, error):
