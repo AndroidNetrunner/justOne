@@ -19,6 +19,8 @@ async def submit_hint(current_game, message, lock):
     current_game.hint_submission += 1
     await current_game.main_channel.send(f"{message.author.name}님이 힌트를 제시하였습니다.")
     await message.author.send(f"등록된 힌트: {message.content}")
+    if current_game.hint_submission >= len(current_game.members) - 1:
+        await start_checking_hints(current_game)
     lock.release()
     
 async def start_checking_hints(current_game):
@@ -39,8 +41,6 @@ async def start_checking_hints(current_game):
 
 async def give_hint(current_game, message, lock_for_submission):
     await asyncio.ensure_future(submit_hint(current_game, message, lock_for_submission))
-    if current_game.hint_submission >= len(current_game.members) - 1: # 힌트 검수 시작
-        await start_checking_hints(current_game)
 
 async def check_hints(current_game, message):
     confirmer = current_game.members[1] if current_game.starter == current_game.guesser else current_game.starter
