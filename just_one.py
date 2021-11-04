@@ -5,9 +5,9 @@ import datetime
 from discord.ext import commands
 from utils import find_game_of_this_channel
 from game_data import game_data, active_game
-from guess import judge_guess, start_guessing, judge_answer, submit_guess
+from guess import correct_answer, submit_guess, wrong_answer
 from start_game import start_game
-from hints import check_hints, give_hint, submit_hint, start_checking_hints, delete_hints
+from hints import check_hints, give_hint
 
 token = open("token.txt",
              'r').read()
@@ -52,15 +52,15 @@ async def 참가(ctx):
         await ctx.send("현재 시작한 게임이 없습니다.")
         return
     current_game = active_game[ctx.channel.id]
-    if current_game.can_join == True:
-        player = ctx.message.author
-        if player not in current_game.members:
-            current_game.members.append(player)
-            await ctx.send("{}님이 참가하셨습니다. 현재 플레이어 {}명".format(player.name, len(current_game.members)))
-        else:
-            await ctx.send("{}님은 이미 참가중입니다.".format(player.name))
-    else:
+    if not current_game.can_join:
         await ctx.send("참가가 이미 마감되었습니다.")
+        return
+    player = ctx.message.author
+    if player not in current_game.members:
+        current_game.members.append(player)
+        await ctx.send("{}님이 참가하셨습니다. 현재 플레이어 {}명".format(player.name, len(current_game.members)))
+    else:
+        await ctx.send("{}님은 이미 참가중입니다.".format(player.name))
 
 @bot.command()
 async def 마감(ctx):
@@ -113,8 +113,7 @@ async def on_raw_reaction_add(payload):
     confirmer = current_game.members[1] if current_game.starter == current_game.guesser else current_game.starter
     if confirmer.id != payload.user_id:
         return
-    result = "correct" if str(payload.emoji) == "⭕" else "wrong"
-    await judge_answer(result, current_game)
+    await correct_answer(current_game) if str(payload.emoji) == "⭕" else await wrong_answer(current_game);
 
 @bot.event
 async def on_command_error(ctx, error):

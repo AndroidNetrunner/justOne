@@ -1,22 +1,29 @@
 import discord
 from start_round import start_round
+from utils import get_submitted_hints
 
-async def judge_answer(status, current_game):
-    word = current_game.word
-    guess = current_game.guess
-    if status == "correct":
-        embed = discord.Embed(title="정답자가 정답을 맞추었습니다!",
-                                description=f"정답은 {word}입니다.")
-        current_game.correct += 1
-    elif status == "pass":
-        embed = discord.Embed(title="정답자가 패스를 선언하였습니다.",
-                                description=f"정답은 {word}입니다.")
-    else:
-        embed = discord.Embed(title="아쉽게도 정답을 맞히지 못했습니다.",
-                                description=f"정답은 {word}이며, 추측한 답은 {guess}입니다.")
-        current_game.round -= 1
+async def correct_answer(current_game):
+    embed = discord.Embed(title="정답자가 정답을 맞추었습니다!",
+                                description=f"정답은 {current_game.word}입니다.")
     embed.add_field(name="참가자들이 작성한 힌트들은 다음과 같습니다.",
                     value=current_game.submitted_hints)
+    current_game.correct += 1
+    await notify_result(current_game, embed)
+
+async def wrong_answer(current_game):
+    embed = discord.Embed(title="아쉽게도 정답을 맞히지 못했습니다.",
+                                description=f"정답은 {current_game.word}이며, 추측한 답은 {current_game.guess}입니다.")
+    embed.add_field(name="참가자들이 작성한 힌트들은 다음과 같습니다.",
+                    value=current_game.submitted_hints)
+    current_game.round -= 1
+    await notify_result(current_game, embed)
+
+async def declare_pass(current_game):
+    embed = discord.Embed(title="정답자가 패스를 선언하였습니다.",
+                                description=f"정답은 {current_game.word}입니다.")
+    await notify_result(current_game, embed)
+
+async def notify_result(current_game, embed):
     await current_game.main_channel.send(embed=embed)
     current_game.current_round += 1
     await start_round(current_game)
@@ -37,15 +44,11 @@ async def submit_guess(current_game, message):
     if current_game.guess != "패스":
         await judge_guess(current_game)
     else:
-        await judge_answer("pass", current_game)
+        await declare_pass("pass", current_game)
 
 async def start_guessing(current_game):
-    hints = current_game.hints
     embed = discord.Embed(title="이제 당신의 차례입니다!")
-    str_hints = ""
-    for hint in hints:
-        str_hints += f"{hint}({hints[hint][0]}), "
-    str_hints = str_hints[:-2]
+    str_hints = get_submitted_hints(current_game);
     embed.add_field(name="힌트들을 보고 답안을 DM으로 보내주세요!",
                     value="힌트는 메인 채널에서 확인할 수 있습니다.")
     embed.add_field(name="만약 패스를 하고 싶다면,", value="채팅창에 '패스'라고 입력해주세요!")
