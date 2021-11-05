@@ -13,7 +13,10 @@ async def reset_round(current_game):
     current_game.hint_time = True
     current_game.hints = {}
     current_game.hint_submission = 0
-    current_game.guesser = random.choice(current_game.members)
+    if not current_game.remained_guesser_candidate:
+        current_game.remained_guesser_candidate = current_game.members[:]
+        random.shuffle(current_game.remained_guesser_candidate)
+    current_game.guesser = current_game.remained_guesser_candidate.pop()
     current_game.word = random.choice(current_game.words)
     current_game.confirmed = False
     while current_game.word in current_game.already:

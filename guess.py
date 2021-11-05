@@ -44,7 +44,7 @@ async def submit_guess(current_game, message):
     if current_game.guess != "패스":
         await judge_guess(current_game)
     else:
-        await declare_pass("pass", current_game)
+        await declare_pass(current_game)
 
 async def start_guessing(current_game):
     embed = discord.Embed(title="이제 당신의 차례입니다!")
