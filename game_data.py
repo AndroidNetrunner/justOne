@@ -4,7 +4,7 @@ class game_data:
         self.round = 13
         self.hints = {}
         self.words = open("word_list.txt", 'r', encoding='UTF-8').read().split('\n')
-        self.already = []
+        self.already = {}
         self.guesser = None
         self.main_channel = None
         self.guess = None

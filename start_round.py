@@ -18,7 +18,7 @@ async def reset_round(current_game):
     current_game.confirmed = False
     while current_game.word in current_game.already:
         current_game.word = random.choice(current_game.words)
-    current_game.already.append(current_game.word)
+    current_game.already.add(current_game.word)
 
 async def show_result(current_game):
     del active_game[current_game.main_channel.channel.id]
