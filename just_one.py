@@ -14,6 +14,10 @@ token = open("token.txt",
 game = discord.Game("도움말은 ~help 입력")
 bot = commands.Bot(command_prefix='~',
                    status=discord.Status.online, activity=game)
+
+with open("./just_one.png", 'rb') as f:
+    image = f.read()
+
 lock_for_submission = Lock()
 
 def start_new_game(ctx):
@@ -86,6 +90,10 @@ async def 개수(ctx, number):
         await ctx.send(f'문제 개수가 {current_game.round}로 설정되었습니다.')
     else:
         await ctx.send("게임을 시작한 이후에는 단어 개수를 변경할 수 없습니다.")
+
+@bot.event
+async def on_ready():
+    await bot.user.edit(avatar=image)
 
 @bot.event
 async def on_message(message):
