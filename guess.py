@@ -5,16 +5,12 @@ from utils import get_submitted_hints
 async def correct_answer(current_game):
     embed = discord.Embed(title="정답자가 정답을 맞추었습니다!",
                                 description=f"정답은 {current_game.word}입니다.")
-    embed.add_field(name="참가자들이 작성한 힌트들은 다음과 같습니다.",
-                    value=current_game.submitted_hints)
     current_game.correct += 1
     await notify_result(current_game, embed)
 
 async def wrong_answer(current_game):
     embed = discord.Embed(title="아쉽게도 정답을 맞히지 못했습니다.",
                                 description=f"정답은 {current_game.word}이며, 추측한 답은 {current_game.guess}입니다.")
-    embed.add_field(name="참가자들이 작성한 힌트들은 다음과 같습니다.",
-                    value=current_game.submitted_hints)
     current_game.round -= 1
     await notify_result(current_game, embed)
 
@@ -24,6 +20,8 @@ async def declare_pass(current_game):
     await notify_result(current_game, embed)
 
 async def notify_result(current_game, embed):
+    embed.add_field(name="참가자들이 작성한 힌트들은 다음과 같습니다.",
+                    value=current_game.submitted_hints)
     await current_game.main_channel.send(embed=embed)
     current_game.current_round += 1
     await start_round(current_game)
