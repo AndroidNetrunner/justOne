@@ -48,7 +48,8 @@ async def start_guessing(current_game):
     embed = discord.Embed(title="이제 당신의 차례입니다!")
     str_hints = get_submitted_hints(current_game);
     embed.add_field(name="힌트들을 보고 답안을 DM으로 보내주세요!",
-                    value=f"힌트: {str_hints if str_hints else '힌트가 모두 사라졌습니다...'}")
+                    value=f"힌트: {str_hints if str_hints else '힌트가 모두 사라졌습니다...'}",
+                    inline=False)
     embed.add_field(name="만약 패스를 하고 싶다면,", value="채팅창에 '패스'라고 입력해주세요!")
     await current_game.guesser.send(embed=embed)
     embed = discord.Embed(title="힌트 검수가 끝났습니다.",
